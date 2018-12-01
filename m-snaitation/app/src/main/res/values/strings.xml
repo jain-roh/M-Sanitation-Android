@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">M-Sanitation</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_request_info">RequestInfo</string>
+    <string name="title_activity_request">RequestActivity</string>
+    <string name="title_activity_request_data">RequestData</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_request_lav">Request Info</string>
+    <string name="title_activity_req_no_display">ReqNoDisplay</string>
+</resources>
