@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,4 +8,19 @@
     tools:context=".ReqNoDisplay"
     tools:showIn="@layout/activity_req_no_display">
 
-</android.support.constraint.ConstraintLayout>
+    <TextView
+        android:id="@+id/reqNoDislay"
+        android:layout_width="158dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="190dp"
+        android:text="Request No"
+        android:textAppearance="@color/design_default_color_primary_dark"
+        tools:layout_editor_absoluteX="163dp"
+        tools:layout_editor_absoluteY="156dp"
+        android:textSize="30dp"
+
+
+        />
+</RelativeLayout>

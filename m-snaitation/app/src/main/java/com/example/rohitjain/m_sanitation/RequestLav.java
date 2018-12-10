@@ -1,6 +1,7 @@
 package com.example.rohitjain.m_sanitation;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -58,6 +59,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RequestLav extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener,OnMapReadyCallback,LocationListener {
 
@@ -75,17 +78,23 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
     private Location mLocation;
     private LocationManager mLocationManager;
     private LocationRequest mLocationRequest;
+    public static final Pattern VALID_EMAIL_ADDRESS_REGEX =
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+    public static boolean validateEmail(String emailStr) {
+        Matcher matcher = VALID_EMAIL_ADDRESS_REGEX .matcher(emailStr);
+        return matcher.find();
+    }
     public boolean onMarkerClick(final Marker marker) {
 
         if (marker.equals(mMap)) {
             // handle click here
             // map.getMyLocation();
-            System.out.println("Clicked");
-            double lat = mMap.getMyLocation().getLatitude();
-            System.out.println("Lat" + lat);
-            Toast.makeText(RequestLav.this,
-                    "Current location " + mMap.getMyLocation().getLatitude(),
-                    Toast.LENGTH_SHORT).show();
+//            System.out.println("Clicked");
+//            double lat = mMap.getMyLocation().getLatitude();
+//            System.out.println("Lat" + lat);
+//            //Toast.makeText(RequestLav.this,
+//                    "Current location " + mMap.getMyLocation().getLatitude(),
+//                    Toast.LENGTH_SHORT).show();
         }
         return true;
     }
@@ -117,15 +126,17 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        mLocationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+        checkLocation();
         mapFragment.getMapAsync(this);
+
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
 
-        mLocationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
-        checkLocation();
+
 
 // Construct a GeoDataClient.
 //        mGeoDataClient = Places.getGeoDataClient(this, null);
@@ -169,16 +180,17 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
                     error=true;
 
                 }
+                if(!validateEmail(email))
+                {
+                    Toast.makeText(getApplicationContext(),"Email Address not in correct form",Toast.LENGTH_LONG).show();
+                    return;
+                }
                 if(mMap!=null && marker!=null)
                 {
                     LatLng position = marker.getPosition(); //
                     lat=position.latitude+"";
                     lon=position.longitude+"";
-                    Toast.makeText(
-                            RequestLav.this,
-                            "Lat " + position.latitude + " "
-                                    + "Long " + position.longitude,
-                            Toast.LENGTH_LONG).show();
+
                 }
                 if(!error)
                 {
@@ -207,20 +219,13 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
                         nameValuePair.put("state",state.toUpperCase());
                         nameValuePair.put("country",country.toUpperCase());
                         nameValuePair.put("postalCode",postalCode.toUpperCase());
-                        nameValuePair.put("knownname",knownName.toUpperCase());
+                       // nameValuePair.put("knownname",knownName.toUpperCase());
 
-                        DBConnect dc = new DBConnect("http://bhartiyamattress.com/fetchLavData.php", "POST", nameValuePair);
+                        DBConnect dc = new DBConnect("http://bhartiyamattress.com/sendLavRequest.php", "POST", nameValuePair);
                         // DBConnect.setDataObject("http://bhartiyamattress.com/fetchLavData.php", "POST", parameter);
                         dc.execute();
-                        if (res == 1) {
-                            Intent intent = new Intent(RequestLav.this, ReqNoDisplay.class);
-                            intent.putExtra("ReqNo", reqNo);
-                            startActivity(intent);
 
-                        } else {
-                            showCustomAlert("Server Error!", "Error connecting to Server");
-                        }
-                    }
+                                           }
                     catch (Exception ex)
                     {
                         showCustomAlert("Error!",ex.getMessage());
@@ -276,18 +281,17 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
     //    LatLng sydney = new LatLng(-34, 151);
         //   mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         // mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        LocationManager locationManager = (LocationManager)
-                getSystemService(Context.LOCATION_SERVICE);
+//        LocationManager locationManager = (LocationManager)
+//                getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
 
-        Location location = locationManager.getLastKnownLocation(locationManager
-                .getBestProvider(criteria, false));
+        Location location = getLastKnownLocation();
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         final LatLng MYLOCATION=new LatLng(latitude,longitude);//mMa.get;
 
         marker = mMap.addMarker(new MarkerOptions()
-                .position(MYLOCATION).title("PERTH")
+                .position(MYLOCATION)
                 .draggable(true));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(MYLOCATION));
         mMap.setMyLocationEnabled(true);
@@ -406,7 +410,22 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
                 });
         Log.d("reque", "--->>>>");
     }
-
+    private Location getLastKnownLocation() {
+        mLocationManager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
+        List<String> providers = mLocationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            Location l = mLocationManager.getLastKnownLocation(provider);
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                // Found best last known location: %s", l);
+                bestLocation = l;
+            }
+        }
+        return bestLocation;
+    }
     @Override
     public void onLocationChanged(Location location) {
 
@@ -490,13 +509,16 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
 //  //      return  jObject;
 //
 //    }
+        ProgressDialog progressDialog=new ProgressDialog(RequestLav.this);
+        //ProgressDialog progress = new ProgressDialog(this);
 
         protected void onPreExecute() {
-//        progressDialog.setMessage("Downloading your data...");
-//        progressDialog.show();
-//       // progressDialog.setOnCancelListener(new OnCancelListener() {
-//            public void onCancel(DialogInterface arg0) {
-//                DBConnect.this.cancel(true);
+        progressDialog.setMessage("Downloading your data...");
+            progressDialog.setCancelable(true);
+        progressDialog.show();
+       // progressDialog.setOnCancelListener(new OnCancelListener() {
+         //   public void onCancel(DialogInterface arg0) {
+            //    DBConnect.this.cancel(true);
 //            }
 //        });
 
@@ -559,6 +581,7 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
                 // Send the post body
 
                 int statusCode = urlConnection.getResponseCode();
+                System.out.println(statusCode);
                 System.out.println("Success 7");
                 if (statusCode ==  200) {
                     System.out.print("Data fetching");
@@ -596,18 +619,43 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
         protected void onPostExecute(Void v) {
 //System.out.println(jArray);
 
-            try {
+            progressDialog.cancel();
+
+try {
 //                for (int i = 0; i < jArray.length(); i++) {
 //
                     // JSONObject jObject = jArray.getJSONObject(i);
 
                 //    json_data = jArray.getJSONObject(i);
 
+                    System.out.println(json_data);
 
                     //System.out.println(json_data);
                     res=json_data.getInt("result");
+
+
                     reqNo=json_data.getString("reqno");
-                    //tid[i] = json_data.getInt("thread_id");
+
+
+    if(res==1)
+    {
+        EditText name=(EditText)findViewById(R.id.nameUser);
+        EditText email=(EditText)findViewById(R.id.emailId);
+        EditText mobile=(EditText)findViewById(R.id.mobile);
+
+        Intent intent=new Intent(RequestLav.this,ReqNoDisplay.class);
+        intent.putExtra("ReqNo",reqNo);
+        name.setText("");
+        email.setText("");
+        mobile.setText("");
+        startActivity(intent);
+    }
+    else
+    {
+
+    }
+
+    //tid[i] = json_data.getInt("thread_id");
                     //chk = 1;
 
                     //  jObject= jArray.getJSONObject(i);
@@ -628,6 +676,9 @@ public class RequestLav extends FragmentActivity implements GoogleApiClient.Conn
             //parse JSON data
             // catch (JSONException e)
         } // protected void onPostExecute(Void v)
+
+
+
         public String getPostDataString(JSONObject params) throws Exception {
 
             StringBuilder result = new StringBuilder();

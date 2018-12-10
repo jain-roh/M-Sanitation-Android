@@ -51,6 +51,10 @@
         <activity
             android:name=".ReqNoDisplay"
             android:label="@string/title_activity_req_no_display"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".RequestTrack"
+            android:label="@string/title_activity_request_track"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

@@ -13,13 +13,15 @@ public class ReqNoDisplay extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle("Your Request No.");
         setContentView(R.layout.activity_req_no_display);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
        String reqNo= getIntent().getStringExtra("ReqNo");
-        TextView reqNoTV=(TextView) findViewById(R.id.ReqNoTV);
-        reqNoTV.setText("Request# : "+reqNo);
+        TextView reqNoTV=(TextView) findViewById(R.id.reqNoDislay);
+        reqNoTV.setText("Request# :\n "+reqNo);
+
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
